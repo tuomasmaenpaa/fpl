@@ -9,13 +9,12 @@ STATUS_URL = 'https://fantasy.premierleague.com/api/event-status/'
 
 class FPL:
 
-
-
     def __init__(self):
         self.fixtures = self.get_fixtures()
         self.team_ids = self.get_team_ids()
         self.player_ids = self.get_player_ids()
         self.latest_gw = self.get_latest_gameweek_no()
+        self.teams = self.get_teams()
 
     def get_team_ids(self):
         
@@ -26,6 +25,11 @@ class FPL:
             teams[i+1] = j['name']
 
         return teams
+
+    def get_teams(self):
+        res  = requests.get(BASE_URL)
+        data = res.json()
+        return pd.DataFrame(data['teams'])
 
     def get_player_ids(self):
 
@@ -52,7 +56,6 @@ class FPL:
         res = requests.get(STATUS_URL)
         data = res.json()
         
-
         try:
              return data['status'][0]['event']
         except:
@@ -70,15 +73,23 @@ class FPL:
 
         return fixtures
 
+    def get_previous_fixtures(self, team_id, n_gws=5):
+        
+        fixtures = self.fixtures.loc[(self.fixtures.event >= (self.latest_gw - n_gws)) 
+                                        & (self.fixtures.event <= self.latest_gw) 
+                                        & ((self.fixtures.team_a == team_id) | (self.fixtures.team_h == team_id))
+                                        ,['event', 'team_a', 'team_h', 'team_a_score', 'team_h_score']]
+        fixtures['opponent'] = np.where(fixtures.team_a == team_id, fixtures.team_h, fixtures.team_a)
+        fixtures['venue'] = np.where(fixtures.team_a == team_id, 'H', 'A')
 
-fpl = FPL()
-
-x = fpl.get_latest_gameweek_no()
-print(x)
-
-df = fpl.get_upcoming_fixtures(1)
-print(df.head())
-
+        return fixtures
+    
+    def get_upcoming_difficulty(self, fixtures, league_table):
+        # TODO: Take H/A into account?
+        print('here')
+        #formsum = league_table.query('FPL-id in @fixtures.opponent')
+        
+        return
 
 
 

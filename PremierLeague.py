@@ -9,7 +9,7 @@ TEAM_NAME_CONVERSION = {
     "Aston Villa": "Aston Villa",
     "Bournemouth": "Bournemouth",
     "Brentford": "Brentford",
-    "Brighton and Hove Albion": "Brighton",
+    "Brighton": "Brighton",
     "Chelsea": "Chelsea",
     "Crystal Palace": "Crystal Palace",
     "Everton": "Everton",
@@ -18,13 +18,13 @@ TEAM_NAME_CONVERSION = {
     "Leicester City": "Leicester",
     "Liverpool": "Liverpool",
     "Manchester City": "Man City",
-    "Manchester United": "Man Utd",
-    "Newcastle United": "Newcastle",
-    "Nottingham Forest": "Nott'm Forest",
+    "Manchester Utd": "Man Utd",
+    "Newcastle Utd": "Newcastle",
+    "Nott'ham Forest": "Nott'm Forest",
     "Southampton": "Southampton",
-    "Tottenham Hotspur": "Spurs",
-    "West Ham United": "West Ham",
-    "Wolverhampton Wanderers": "Wolves"
+    "Tottenham": "Spurs",
+    "West Ham": "West Ham",
+    "Wolves": "Wolves"
 }
 
 class FBREF:
@@ -65,7 +65,7 @@ class FBREF:
         team_names = [self.parse_team_name(url) for url in team_urls] 
         return list(zip(team_names, team_urls))
         
-    def get_league_table(self):
+    def get_league_table(self, convert_to_fpl=False):
         
         standing_url = 'https://fbref.com/en/comps/9/Premier-League-Stats'
         data = pd.read_html(standing_url, match='Regular season Table')
@@ -77,6 +77,11 @@ class FBREF:
         table['Last 5'] = table['Last 5'].astype('|S').str.decode("utf-8")
         table['Form'] = table.apply(self.quantify_form, axis=1)
         
+        if convert_to_fpl:
+            table['Squad'] = table['Squad'].apply(self.fbref_to_fpl)
+            fpl_teams = sorted(list(TEAM_NAME_CONVERSION.values()))
+            table['FPL-id'] = table.apply(lambda x: fpl_teams.index(x.Squad) + 1, axis=1)
+
         return table
 
     # Too ineffective, works though
@@ -86,14 +91,14 @@ class FBREF:
             'Gameweek': [gw for gw in range(1,39)]
         }
         
-        team_urls = get_team_urls()
+        team_urls = self.get_team_urls()
         team_urls.sort(key=lambda t: t[0])
         for name, url in team_urls:
             data = pd.read_html(url, match = 'Scores & Fixtures')[0]
             data = data[data.Comp == 'Premier League']
-            data['Opponent'] = data['Opponent'].apply(lambda x: fbref_to_fpl(x))
+            data['Opponent'] = data['Opponent'].apply(lambda x: self.fbref_to_fpl(x))
             
-            fixtures[fbref_to_fpl(name)]= data[['Opponent', 'Venue']].agg('-'.join, axis=1).tolist()
+            fixtures[self.fbref_to_fpl(name)]= data[['Opponent', 'Venue']].agg('-'.join, axis=1).tolist()
             # Sleep 8s to keep the request rate below fbref limit
             time.sleep(8)
             
