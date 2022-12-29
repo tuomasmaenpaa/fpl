@@ -84,19 +84,26 @@ class FPL:
 
         return fixtures
     
-    def get_upcoming_difficulty(self, fixtures, league_table):
+    def get_upcoming_team_difficulty(self, fixtures, league_table):
         # TODO: Take H/A into account?
-        print('here')
-        #formsum = league_table.query('FPL-id in @fixtures.opponent')
-        
-        return
+        formsum = league_table.query('FPLid in @fixtures.opponent')
+        difficulty = formsum.Pts.sum() + formsum.Form.sum()
+        return difficulty
+
+    def get_upcoming_attacking_threat(self, fixtures, league_table):
+
+        df = league_table.query('FPLid in @fixtures.opponent')
+        return np.divide(df.xG.sum(), df.MP.sum())
+
+    def get_upcoming_defensive_difficulty(self, fixtures, league_table):
+
+        df = league_table.query('FPLid in @fixtures.opponent')
+        return np.divide(df.xGA.sum(), df.MP.sum())
 
 
 
-
-
-
-
+# TODO: Difficulty doesn't take double/blank gameweeks into account
+#           --> Add division by number of games in selected # of gameweeks
 
 
 

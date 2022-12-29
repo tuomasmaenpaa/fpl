@@ -80,7 +80,7 @@ class FBREF:
         if convert_to_fpl:
             table['Squad'] = table['Squad'].apply(self.fbref_to_fpl)
             fpl_teams = sorted(list(TEAM_NAME_CONVERSION.values()))
-            table['FPL-id'] = table.apply(lambda x: fpl_teams.index(x.Squad) + 1, axis=1)
+            table['FPLid'] = table.apply(lambda x: fpl_teams.index(x.Squad) + 1, axis=1)
 
         return table
 
