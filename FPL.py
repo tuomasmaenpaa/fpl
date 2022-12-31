@@ -15,6 +15,7 @@ class FPL:
         self.player_ids = self.get_player_ids()
         self.latest_gw = self.get_latest_gameweek_no()
         self.teams = self.get_teams()
+        self.players = self.get_players()
 
     def get_team_ids(self):
         
@@ -30,6 +31,14 @@ class FPL:
         res  = requests.get(BASE_URL)
         data = res.json()
         return pd.DataFrame(data['teams'])
+
+    def get_players(self):
+        res = requests.get(BASE_URL)
+        data = res.json()
+        players = pd.DataFrame(data['elements'])
+        # TODO: Drop some columns?
+        return players
+
 
     def get_player_ids(self):
 
@@ -88,22 +97,18 @@ class FPL:
         # TODO: Take H/A into account?
         formsum = league_table.query('FPLid in @fixtures.opponent')
         difficulty = formsum.Pts.sum() + formsum.Form.sum()
-        return difficulty
+        return np.divide(difficulty, fixtures.shape[0])
 
     def get_upcoming_attacking_threat(self, fixtures, league_table):
 
         df = league_table.query('FPLid in @fixtures.opponent')
-        return np.divide(df.xG.sum(), df.MP.sum())
+        return np.divide(np.divide(df.xG.sum(), df.MP.sum()), fixtures.shape[0])
 
     def get_upcoming_defensive_difficulty(self, fixtures, league_table):
 
         df = league_table.query('FPLid in @fixtures.opponent')
-        return np.divide(df.xGA.sum(), df.MP.sum())
+        return np.power(np.divide(np.divide(df.xGA.sum(), df.MP.sum()),fixtures.shape[0]), -1)
 
-
-
-# TODO: Difficulty doesn't take double/blank gameweeks into account
-#           --> Add division by number of games in selected # of gameweeks
 
 
 
