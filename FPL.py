@@ -7,6 +7,27 @@ BASE_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/'
 FIXTURES_URL = 'https://fantasy.premierleague.com/api/fixtures/'    
 STATUS_URL = 'https://fantasy.premierleague.com/api/event-status/'
 
+PLAYER_COLUMN_NAMES = {
+    'web_name': 'name',
+    'selected_by_percent': 'selected%',
+    'now_cost': 'price',
+    'goals_scored': 'goals',
+    'goals_conceded': 'GA',
+    'clean_sheets': 'Cs',
+    'expected_goals': 'xG',
+    'expected_assists': 'xA',
+    'expected_goal_involvements': 'xGI',
+    'expected_goals_conceded': 'xGA',
+    'expected_goals_per_90': 'xG/90',
+    'saves_per_90': 'Saves/90',
+    'expected_assists_per_90': 'xA/90',
+    'expected_goal_involvements_per_90': 'xGI/90',
+    'expected_goals_conceded_per_90': 'xGA/90',
+    'goals_conceded_per_90': 'GA/90',
+    'starts_per_90': 'Starts/90',
+    'clean_sheets_per_90': 'Cs/90'
+    }
+
 class FPL:
 
     def __init__(self):
@@ -33,12 +54,33 @@ class FPL:
         return pd.DataFrame(data['teams'])
 
     def get_players(self):
+        
         res = requests.get(BASE_URL)
         data = res.json()
+        
         players = pd.DataFrame(data['elements'])
-        # TODO: Drop some columns?
-        return players
+        positions = pd.DataFrame(data['element_types'])
+        teams = pd.DataFrame(data['teams'])
 
+        players['position'] = players.element_type.map(positions.set_index('id').singular_name)
+        players['form'] = players.form.astype(float)
+        players['expected_goals'] = players.expected_goals.astype(float)
+        players['expected_assists'] = players.expected_assists.astype(float)
+        players['expected_goal_involvements'] = players.expected_goal_involvements.astype(float)
+        players['expected_goals_conceded'] = players.expected_goals_conceded.astype(float)
+        players['team_name'] = players.team.map(teams.set_index('id').name)
+        players['value'] = players.total_points / players.now_cost
+        players['ppm'] = players.total_points / players.minutes
+        players['now_cost'] /= 10
+        players.rename(columns=PLAYER_COLUMN_NAMES, inplace=True)
+        modcols = list(PLAYER_COLUMN_NAMES.values())
+        
+        return players[['id', 'team', 'team_name', 'position',
+        'minutes','total_points', 'ppm', 'form', 'value',
+        'assists', 'own_goals',
+        'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards',
+        'saves', 'bonus', 'bps', 'influence', 'creativity', 'threat',
+        'ict_index', 'starts'] + modcols]
 
     def get_player_ids(self):
 
