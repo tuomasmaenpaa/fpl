@@ -25,7 +25,8 @@ PLAYER_COLUMN_NAMES = {
     'expected_goals_conceded_per_90': 'xGA/90',
     'goals_conceded_per_90': 'GA/90',
     'starts_per_90': 'Starts/90',
-    'clean_sheets_per_90': 'Cs/90'
+    'clean_sheets_per_90': 'Cs/90',
+    'chance_of_playing_next_round': 'fitness'
     }
 
 class FPL:
